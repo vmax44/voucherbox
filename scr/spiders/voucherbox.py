@@ -9,10 +9,9 @@ class VoucherboxSpider(scrapy.Spider):
     allowed_domains = ["voucherbox.co.uk"]
     api_url='https://www.voucherbox.co.uk/ajax/lazy-load-vouchers'
     start_urls=['https://www.voucherbox.co.uk/categories']
+    debug_count_pages=1
+
     categories=[]
-    file_number=1
-
-
 
     def construct_request(self,page,category):
         req=scrapy.FormRequest(self.api_url,
@@ -33,9 +32,10 @@ class VoucherboxSpider(scrapy.Spider):
 
     def parse_category(self, response):
         j = json.loads(response.body.decode("utf-8"))
-        for item_url in self.parse_items_urls(j['view'],response,response.url):
-            yield item_url
-        if j['remaining']>0 and j['start']<=1:
+        yield from self.parse_items_urls(j['view'],response,response.url)
+        #for item_url in self.parse_items_urls(j['view'],response,response.url):
+        #    yield item_url
+        if j['remaining']>0 and j['start'] <= self.debug_count_pages:
             yield self.construct_request(str(j['start']),response.meta['category'])
 
     def parse_items_urls(self, html, response, baseurl):
